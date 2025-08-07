@@ -5,15 +5,15 @@ const messageSchema = new Schema(
   {
     senderName: {
       type: String,
-      min: [2, 'Name must contain at least 2 character'],
+      minLength: [2, 'Name must contain at least 2 characters'],
     },
     subject: {
       type: String,
-      min: [2, 'Name must contain at least 2 character'],
+      minLength: [2, 'subject must contain at least 2 characters'],
     },
     message: {
       type: String,
-      min: [2, 'Name must contain at least 2 character'],
+      minLength: [2, 'message must contain at least 2 characters'],
     },
   },
   { timestamps: true }

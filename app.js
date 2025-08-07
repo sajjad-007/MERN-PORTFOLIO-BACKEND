@@ -19,9 +19,12 @@ app.use(cookieParser());
 app.use(express.json());
 //to parse nested (post method) values
 app.use(express.urlencoded({ extended: true }));
+//TO USE INPUT PROPERTY "FILES", IF WE USE fileUpload WE DON'T HAVE TO USE "MULTER"
+app.use(fileUpload({ 
+  useTempFiles: true, 
+  tempFileDir: './temp/' 
+}));
 //My all routes
 app.use(allRoutes)
-//TO USE INPUT PROPERTY "FILES", IF WE USE fileUpload WE DON'T HAVE TO USE "MULTER"
-app.use(fileUpload({ useTempFiles: true, tempFileDir: '/temp/' }));
 
 module.exports = { app };
