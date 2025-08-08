@@ -3,7 +3,9 @@ const { ErrorHandler } = require('../middlewares/error');
 const cloudinary = require('cloudinary');
 const { userModel } = require('../models/userSchema');
 const { generateToken } = require('../utilits/jwtToken');
-
+const { sendEmail } = require('../utilits/sendEmail');
+const crypto = require('crypto');
+//REGISTER CONTROLLER
 const register = catchAsyncErrors(async (req, res, next) => {
   //Object.keys(req.files).length === 0, means if req.files was empty
   if (!req.files || Object.keys(req.files).length === 0) {
@@ -76,7 +78,7 @@ const register = catchAsyncErrors(async (req, res, next) => {
   generateToken(registerUser, 201, res, 'registration successfull');
 });
 
-//login controller
+//LOGIN CONTROLLER
 const login = catchAsyncErrors(async (req, res, next) => {
   const { email, password } = req.body;
   if (!email || !password) {
@@ -96,7 +98,7 @@ const login = catchAsyncErrors(async (req, res, next) => {
   generateToken(user, 201, res, 'Login successfull');
 });
 
-//log out controller
+//LOG OUT CONTROLLER
 const logout = catchAsyncErrors(async (req, res, next) => {
   res
     .status(201)
@@ -110,7 +112,7 @@ const logout = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
-//get user
+//GET USER CONTROLLER
 const getUser = catchAsyncErrors(async (req, res, next) => {
   const findUser = await userModel.findById(req.user._id);
   if (!findUser) {
@@ -123,7 +125,7 @@ const getUser = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-//update profile
+//UPDATE PROFILE CONTROLLER
 const updateProfile = catchAsyncErrors(async (req, res, next) => {
   //update your information
   const newUpdatedProfile = {
@@ -175,9 +177,9 @@ const updateProfile = catchAsyncErrors(async (req, res, next) => {
     req.user._id,
     newUpdatedProfile,
     {
-      new: true,
-      runValidators: true,
-      useFindAndModify: true,
+      new: true, //returns the updated document instead of the old one
+      runValidators: true, //enforces schema rules
+      useFindAndModify: false, //uses the modern update method.
     }
   );
   res.status(200).json({
@@ -187,4 +189,111 @@ const updateProfile = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-module.exports = { register, login, logout, getUser, updateProfile };
+//GET USER FOR PORTFOLIO
+const getUserforPortfolio = catchAsyncErrors(async (req, res, next) => {
+  const id = '689499b66e3e3657c71cee48';
+  const findUser = await userModel.findById(id);
+  if (!findUser) {
+    return next(new ErrorHandler('User not found!', 401));
+  }
+  res.status(201).json({
+    success: true,
+    message: 'User found successfully!',
+    findUser,
+  });
+});
+
+//UPDATE PASSWORD
+const updatePassword = catchAsyncErrors(async (req, res, next) => {
+  const { currentPassword, newPassword, confirmPassword } = req.body;
+  const user = await userModel.findById(req.user._id).select('+password');
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    return next(new ErrorHandler('Credentials Missing!', 401));
+  }
+  //match password
+  const isPasswordMatch = await user.comparePassword(currentPassword);
+  if (!isPasswordMatch) {
+    return next(new ErrorHandler("Current Password doesn't Match!", 401));
+  }
+  if (newPassword !== confirmPassword) {
+    return next(
+      new ErrorHandler("New Password & Confirm Password doesn't Match!", 401)
+    );
+  }
+  user.password = newPassword;
+  await user.save({ validateBeforeSave: false });
+  res.status(201).json({
+    success: true,
+    message: 'Password Upadted!',
+  });
+});
+//FORGOT PASSWORD
+const forgetPassword = catchAsyncErrors(async (req, res, next) => {
+  const { email } = req.body;
+  if (!email) {
+    return next(new ErrorHandler('Email is not found!', 401));
+  }
+  const findUser = await userModel.findOne({ email: email });
+  if (!findUser) {
+    return next(new ErrorHandler('User is not found!', 401));
+  }
+  const resetToken = findUser.generateResetToken();
+  const resetPasswordUrl = `${process.env.DASHBOARD_URL}/password/reset/${resetToken}`;
+  const message = `Your Reset Password token is below: \n\n ${resetPasswordUrl} \n\n If you've not requested for this email, please ignore it.`;
+  try {
+    sendEmail({
+      email: findUser.email,
+      subject: 'Personal Dashboard Password Reset',
+      message,
+    });
+    res.status(201).json({
+      success: true,
+      message: `Email sent to ${findUser.email} successfull!`,
+    });
+  } catch (error) {
+    (findUser.resetPasswordToken = undefined),
+      (findUser.resetPasswordExpire = undefined),
+      await findUser.save({ validateBeforeSave: false });
+    return next(new ErrorHandler(error.message, 500));
+  }
+});
+//RESET PASSWORD
+const resetPassword = catchAsyncErrors(async (req, res, next) => {
+  const { token } = req.params;
+  const resetPasswordToken = crypto
+    .createHash(sha256)
+    .update(token)
+    .digest('hex');
+  //find user in database using token
+  const user = await userModel.findOne({
+    resetPasswordToken,
+    resetPasswordExpire: { $gt: Date.now() },
+  });
+  if (!user) {
+    return next(
+      new ErrorHandler('Reset Password token is Invalid or Expried', 401)
+    );
+  }
+  if (req.body.password !== req.body.confirmPassword) {
+    return next(new ErrorHandler("Passowrd doesn't Match", 401));
+  }
+  user.password = await req.body.password;
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpire = undefined;
+
+  await user.save();
+
+  generateToken(user, 200, res, 'Password reset successfull!');
+});
+
+module.exports = {
+  register,
+  login,
+  logout,
+  getUser,
+  updateProfile,
+  getUserforPortfolio,
+  updatePassword,
+  forgetPassword,
+  resetPassword,
+};

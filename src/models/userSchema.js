@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const { Schema } = mongoose;
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 
 const userSchema = new Schema({
   fullName: {
@@ -23,7 +24,7 @@ const userSchema = new Schema({
   password: {
     type: String,
     required: [true, 'Password is required'],
-    // minLength: [8, 'Password must contain at least 8 characters'],
+    // minLength: [6, 'Password must contain at least 8 characters'],
     //select false: so that passwords (even if hashed) aren’t accidentally exposed when fetching users.
     select: false,
   },
@@ -68,7 +69,7 @@ const userSchema = new Schema({
 });
 
 //In Mongoose, isModified() is a method used on a document instance to check whether a particular path (field) has been modified since the document was loaded or saved.
-userSchema.pre('save', async function(next) {
+userSchema.pre('save', async function (next) {
   // 1.if my password is not modified(not change) yet
   //keyword(this) is not supported in arrow function
   if (!this.isModified('password')) {
@@ -81,15 +82,29 @@ userSchema.pre('save', async function(next) {
 
 // userSchema.methods: now you can Add your own function to every user
 //userSchema.methods will create a function name comparePassword in every user object (database) and it can compare user password
-userSchema.methods.comparePassword = async function(newEnterdPassowrd) {
+userSchema.methods.comparePassword = async function (newEnterdPassowrd) {
   return await bcrypt.compare(newEnterdPassowrd, this.password);
   // "Every user can now do user.comparePassword() to check if a password is correct."
 };
 
-userSchema.methods.generateJsonWebToken = function() {
+userSchema.methods.generateJsonWebToken = function () {
   return jwt.sign({ id: this._id }, process.env.JWT_TOKEN_SECRET_KEY, {
     expiresIn: process.env.JWT_TOKEN_EXPIRESIN,
   });
+};
+
+//GENERATE RESET PASSWORD TOKEN
+userSchema.methods.generateResetToken = function () {
+  //Generating Token
+  const resetToken = crypto.randomBytes(20).toString('hex');
+  //Hashing and Adding Reset Password Token To UserSchema
+  this.resetPasswordToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+  //Setting Reset Password Token Expiry Time
+  this.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
+  return resetToken;
 };
 
 const userModel = mongoose.model('user', userSchema);
