@@ -6,7 +6,6 @@ const userRotue = require('./user.apiRoute');
 
 //.use() হল Express.js-এর একটি middleware ফাংশন,যা অন্য কোনো router যুক্ত করতে ব্যবহৃত হয়
 _.use('/api/v1', messageRoute);
-_.use('/api/v1', userRotue);
-
+_.use('/api/v1/user', userRotue);
 
 module.exports = _;

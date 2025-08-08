@@ -70,6 +70,7 @@ const userSchema = new Schema({
 //In Mongoose, isModified() is a method used on a document instance to check whether a particular path (field) has been modified since the document was loaded or saved.
 userSchema.pre('save', async function(next) {
   // 1.if my password is not modified(not change) yet
+  //keyword(this) is not supported in arrow function
   if (!this.isModified('password')) {
     return next(); // 2.move to the next step (e.g., saving the user)
   }
