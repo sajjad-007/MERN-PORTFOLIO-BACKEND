@@ -3,6 +3,7 @@ const { ErrorHandler } = require('../middlewares/error');
 const { projectModel } = require('../models/projectSchema');
 const cloudinary = require('cloudinary');
 
+//CREATE PROJECT
 const createProject = catchAsyncErrors(async (req, res, next) => {
   if (!req.files || Object.keys(req.files).length === 0) {
     return next(new ErrorHandler('Image field is empty', 404));
@@ -94,5 +95,75 @@ const getSingleProject = catchAsyncErrors(async (req, res, next) => {
     findProject,
   });
 });
+//DELETE PROJECT
+const deleteProject = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.params;
+  const findProject = await projectModel.findById(id);
+  if (!findProject) {
+    return next(new ErrorHandler('Project Not found!', 404));
+  }
+  const projectImgId = findProject.projectImage.public_id;
+  await cloudinary.uploader.destroy(projectImgId);
+  //now the delete database
+  await findProject.deleteOne();
+  res.status(200).json({
+    success: true,
+    message: 'Project Delete succesfull!',
+  });
+});
+//UPDATE PROJECT'S INFORMATION
+const updateProject = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.params;
+  const updateProjectData = {
+    title: req.body.title,
+    description: req.body.description,
+    gitRepoLink: req.body.gitRepoLink,
+    projectLink: req.body.projectLink,
+    stack: req.body.stack,
+    technologies: req.body.technologies,
+    deployed: req.body.deployed,
+  };
+  if (req.files && req.files.projectImage) {
+    const newProjectImg = req.files.projectImage;
+    const findMyProject = await projectModel.findById(id);
+    const oldProjectImgId = findMyProject.projectImage.public_id;
+    //destroy old image from cloudinary
+    await cloudinary.uploader.destroy(oldProjectImgId);
+    const cloudinaryResponse = await cloudinary.uploader.upload(
+      newProjectImg.tempFilePath,
+      {
+        folder: 'UPDATED PROJECT IMG',
+      }
+    );
+    updateProject.projectImage = {
+      public_id: cloudinaryResponse.public_id,
+      url: cloudinaryResponse.secure_url,
+    };
+  }
+  //save database
+  const updateDatabase = await projectModel.findByIdAndUpdate(
+    id,
+    updateProjectData,
+    {
+      new: true,
+      runValidators: true,
+      useFindAndModify: false,
+    }
+  );
+  if (!updateDatabase) {
+    return next(new ErrorHandler("Couldn't update database", 401));
+  }
+  res.status(200).json({
+    success: true,
+    message: 'Project Update succesfull!',
+    updateDatabase,
+  });
+});
 
-module.exports = { createProject, getAllProject, getSingleProject };
+module.exports = {
+  createProject,
+  getAllProject,
+  getSingleProject,
+  deleteProject,
+  updateProject,
+};
