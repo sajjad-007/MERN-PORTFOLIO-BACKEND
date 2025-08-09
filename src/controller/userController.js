@@ -238,6 +238,8 @@ const forgetPassword = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler('User is not found!', 401));
   }
   const resetToken = findUser.generateResetToken();
+  await findUser.save({ validateBeforeSave: false }); //Save token to DB after generating
+
   const resetPasswordUrl = `${process.env.DASHBOARD_URL}/password/reset/${resetToken}`;
   const message = `Your Reset Password token is below: \n\n ${resetPasswordUrl} \n\n If you've not requested for this email, please ignore it.`;
   try {
@@ -261,12 +263,13 @@ const forgetPassword = catchAsyncErrors(async (req, res, next) => {
 const resetPassword = catchAsyncErrors(async (req, res, next) => {
   const { token } = req.params;
   const resetPasswordToken = crypto
-    .createHash(sha256)
+    .createHash('sha256')
     .update(token)
     .digest('hex');
   //find user in database using token
   const user = await userModel.findOne({
     resetPasswordToken,
+    //The $gt is a MongoDB query operator that means “greater than”.
     resetPasswordExpire: { $gt: Date.now() },
   });
   if (!user) {
@@ -277,7 +280,7 @@ const resetPassword = catchAsyncErrors(async (req, res, next) => {
   if (req.body.password !== req.body.confirmPassword) {
     return next(new ErrorHandler("Passowrd doesn't Match", 401));
   }
-  user.password = await req.body.password;
+  user.password = req.body.password;
   user.resetPasswordToken = undefined;
   user.resetPasswordExpire = undefined;
 
