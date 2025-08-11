@@ -2,6 +2,7 @@
 class ErrorHandler extends Error {
   constructor(message, statusCode) {
     super(message); // This(super) calls the parent Error class constructor
+    // this.message = message
     this.statusCode = statusCode;
   }
 }
@@ -10,7 +11,7 @@ class ErrorHandler extends Error {
 
 // 1. Default Error Values:
 // If no specific error message or status code is provided, it defaults to "Internal server error" and code 500.
-const errorMiddleware = (err, res, req, next) => {
+const errorMiddleware = (err, req, res, next) => {
   err.message = err.message || 'Internal server error';
   err.statusCode = err.statusCode || 500;
   
