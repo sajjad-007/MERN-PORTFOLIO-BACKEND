@@ -55,10 +55,10 @@ const userSchema = new Schema({
   githubUrl: {
     type: String,
   },
-  linkdinUrl: {
+  linkedinUrl: {
     type: String,
   },
-  instragramUrl: {
+  instagramUrl: {
     type: String,
   },
   facebookUrl: {

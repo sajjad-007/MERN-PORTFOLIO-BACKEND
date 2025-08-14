@@ -48,8 +48,18 @@ const register = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler('Resume is not found', 401));
   }
   // upload user info into database
-  const { fullName, email, phoneNumber, password, portfolioUrl, aboutMe } =
-    req.body;
+  const {
+    fullName,
+    email,
+    phoneNumber,
+    password,
+    portfolioUrl,
+    aboutMe,
+    githubUrl,
+    linkedinUrl,
+    instagramUrl,
+    facebookUrl,
+  } = req.body;
   //create a user
   const registerUser = await userModel.create({
     fullName,
@@ -66,6 +76,10 @@ const register = catchAsyncErrors(async (req, res, next) => {
       public_id: cloudinaryResponseForResume.public_id, // Set your cloudinary public_id here
       url: cloudinaryResponseForResume.secure_url, // Set your cloudinary secure_url here
     },
+    githubUrl,
+    linkedinUrl,
+    instagramUrl,
+    facebookUrl,
   });
   if (!registerUser) {
     return next(new ErrorHandler('user registration unsuccessfull', 401));
@@ -135,6 +149,10 @@ const updateProfile = catchAsyncErrors(async (req, res, next) => {
     password: req.body.password,
     portfolioUrl: req.body.portfolioUrl,
     aboutMe: req.body.aboutMe,
+    githubUrl: req.body.githubUrl,
+    linkedinUrl: req.body.linkedinUrl,
+    instagramUrl: req.body.instagramUrl,
+    facebookUrl: req.body.facebookUrl,
   };
   //update your avatar
   if (req.files && req.files.avatar) {
