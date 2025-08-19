@@ -4,6 +4,9 @@ const { timelineModel } = require('../models/timelineSchema');
 
 const createTimeline = catchAsyncErrors(async (req, res, next) => {
   const { title, description, from, to } = req.body;
+  if (!title || !description || !from ) {
+    return next(new ErrorHandler('Credential Missing!', 404));
+  }
   //save database
   const createNewTimeline = await timelineModel.create({
     title,
@@ -20,14 +23,14 @@ const createTimeline = catchAsyncErrors(async (req, res, next) => {
   });
 });
 const getAllTimeline = catchAsyncErrors(async (req, res, next) => {
-  const findAllTimelineData = await timelineModel.find({});
-  if (!findAllTimelineData) {
+  const getAllTimelineData = await timelineModel.find({});
+  if (!getAllTimelineData) {
     return next(ErrorHandler('Database is empty', 401));
   }
   res.status(200).json({
     success: true,
     message: 'Time Line data found successfully',
-    findAllTimelineData,
+    getAllTimelineData,
   });
 });
 const deleteTimeline = catchAsyncErrors(async (req, res, next) => {

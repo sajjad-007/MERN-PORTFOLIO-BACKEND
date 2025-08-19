@@ -73,14 +73,14 @@ const createProject = catchAsyncErrors(async (req, res, next) => {
 //GET ALL PROJECT
 const getAllProject = catchAsyncErrors(async (req, res, next) => {
   const searchAllProject = await projectModel.find({});
+  if (!searchAllProject) {
+    return next(new ErrorHandler('Database is Empty', 404));
+  }
   res.status(200).json({
     success: true,
     message: 'All Project Found!',
     searchAllProject,
   });
-  if (!searchAllProject) {
-    return next(new ErrorHandler('Database is Empty', 404));
-  }
 });
 // GET SINGLE PROJECT
 const getSingleProject = catchAsyncErrors(async (req, res, next) => {
@@ -123,10 +123,14 @@ const updateProject = catchAsyncErrors(async (req, res, next) => {
     technologies: req.body.technologies,
     deployed: req.body.deployed,
   };
+  if (!req.files.projectImage) {
+    return next(new ErrorHandler('Project Image not found', 404));
+  }
   if (req.files && req.files.projectImage) {
     const newProjectImg = req.files.projectImage;
     const findMyProject = await projectModel.findById(id);
     const oldProjectImgId = findMyProject.projectImage.public_id;
+
     //destroy old image from cloudinary
     await cloudinary.uploader.destroy(oldProjectImgId);
     const cloudinaryResponse = await cloudinary.uploader.upload(
@@ -135,7 +139,7 @@ const updateProject = catchAsyncErrors(async (req, res, next) => {
         folder: 'UPDATED PROJECT IMG',
       }
     );
-    updateProject.projectImage = {
+    updateProjectData.projectImage = {
       public_id: cloudinaryResponse.public_id,
       url: cloudinaryResponse.secure_url,
     };
@@ -146,7 +150,7 @@ const updateProject = catchAsyncErrors(async (req, res, next) => {
     updateProjectData,
     {
       new: true,
-      runValidators: true,
+      // runValidators: true,
       useFindAndModify: false,
     }
   );

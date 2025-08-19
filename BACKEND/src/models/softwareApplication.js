@@ -3,7 +3,7 @@ const { Schema } = mongoose;
 
 const softwareAppSchema = new Schema(
   {
-    name: {
+    title: {
       type: String,
       required: ['Title is required!'],
     },

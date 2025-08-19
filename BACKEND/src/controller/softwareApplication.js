@@ -5,18 +5,17 @@ const cloudinary = require('cloudinary')
 
 const createSoftwareApplication = catchAsyncErrors(async (req, res, next) => {
   if (!req.files || Object.keys(req.files).length === 0) {
-    return next(new ErrorHandler('Files are required!', 400));
+    return next(new ErrorHandler('File Required!', 400));
   }
   // Check if required files exist
   if (!req.files.icons) {
     return next(new ErrorHandler('Icons file is required!', 400));
   }
-
   const { icons } = req.files;
-  const { name } = req.body;
+  const { title } = req.body;
   
-  if (!name) {
-    return next(new ErrorHandler('Name is not found', 401));
+  if (!title) {
+    return next(new ErrorHandler('Title is not found', 401));
   }
   //uplaod your avatar
   const cloudinaryResponseForIcons = await cloudinary.uploader.upload(
@@ -32,7 +31,7 @@ const createSoftwareApplication = catchAsyncErrors(async (req, res, next) => {
   }
   //now create database
   const uploadIcons = await softApplicationModel.create({
-    name,
+    title,
     icons: {
       public_id: cloudinaryResponseForIcons.public_id,
       url: cloudinaryResponseForIcons.secure_url,

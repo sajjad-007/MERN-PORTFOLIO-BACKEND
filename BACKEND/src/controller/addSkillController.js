@@ -3,6 +3,7 @@ const { ErrorHandler } = require('../middlewares/error');
 const { addSkillModel } = require('../models/addSkillSchema');
 const cloudinary = require('cloudinary');
 
+// CREATE SKILL
 const createAddSkill = catchAsyncErrors(async (req, res, next) => {
   if (!req.files || Object.keys(req.files).length === 0) {
     return next(new ErrorHandler('Files are required!', 404));
@@ -44,10 +45,11 @@ const createAddSkill = catchAsyncErrors(async (req, res, next) => {
   }
   res.status(200).json({
     success: true,
-    message: 'A Skill Added created!',
+    message: 'Skill Created Successfully!',
     uploadIcons,
   });
 });
+// get all skill
 const getAllSkill = catchAsyncErrors(async (req, res, next) => {
   const allSkill = await addSkillModel.find({});
   if (!allSkill) {
@@ -59,6 +61,7 @@ const getAllSkill = catchAsyncErrors(async (req, res, next) => {
     allSkill,
   });
 });
+//  DELETE SKILLS
 const deleteSkill = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
   const isSkillExist = await addSkillModel.findById(id);
@@ -73,6 +76,7 @@ const deleteSkill = catchAsyncErrors(async (req, res, next) => {
     message: 'A Skill Deleted!',
   });
 });
+// update skill
 const updateSkill = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
   const findSkill = await addSkillModel.findById(id);

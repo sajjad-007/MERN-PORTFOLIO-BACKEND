@@ -8,7 +8,7 @@ const {
 } = require('../controller/messageController');
 const { isUserAuthenticated } = require('../middlewares/auth');
 
-_.route('/send').post(sendMessage).get(getAllMessage);
-_.route('/send/:id').delete(isUserAuthenticated, deleteMessage);
+_.route('/getall').post(sendMessage).get(getAllMessage);
+_.route('/delete/:id').delete(isUserAuthenticated, deleteMessage);
 
 module.exports = _;
