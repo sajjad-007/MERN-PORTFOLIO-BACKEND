@@ -209,7 +209,7 @@ const updateProfile = catchAsyncErrors(async (req, res, next) => {
 
 //GET USER FOR PORTFOLIO
 const getUserforPortfolio = catchAsyncErrors(async (req, res, next) => {
-  const id = '689499b66e3e3657c71cee48';
+  const id = '6895b6805f172489a108215f';
   const findUser = await userModel.findById(id);
   if (!findUser) {
     return next(new ErrorHandler('User not found!', 401));
